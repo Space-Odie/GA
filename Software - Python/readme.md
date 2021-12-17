@@ -1,0 +1,1 @@
+Python version of a genetic algorithm. I used this to optimize my genetic algorithm to understand that elitsm should be used as part of the selection process. I also learned that a 5% mutation rate is too high (as seen in Software Images 1 & 2).
