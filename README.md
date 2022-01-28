@@ -8,7 +8,7 @@
 
 ## Introduction
 
-Genetic algorithm (GA) is a search heurstic, inspired by the theroy of natural evolution. It reflects the process of natural selection where "Fit" indivduals survive for reproduction while the "Weak" onces die out where individuals are possible solutions. GA is commonly used to create high-quality solutions to optimzation and serach problems using the following operators:  
+Genetic algorithm (GA) is a search heurstic, inspired by the theory of natural evolution. It reflects the process of natural selection where "Fit" indivduals survive for reproduction while the "Weak" onces die out where individuals are possible solutions. GA is commonly used to create high-quality solutions to optimzation and serach problems using the following operators:  
 
 these biologically inspired operators are the following:
 - Initial Population
