@@ -7,17 +7,30 @@ package my_pkg;
 //PARAMETERS
     parameter SIZE = 8;                 //default 8 bit (max value is 180 for a coordinate)
     parameter NumOfCities = 5;
-    parameter Population_Size = 15; 
+    parameter Population_Size = 16; 
     parameter ElitismSize = 3;
+    parameter total_iterations = 30;
+    
+    parameter MUTATION_RATE = 20; // Population_Size << 3;
     
     
     //typedef
-     typedef enum reg [2:0] {STATE_1,
+     typedef enum reg [3:0] {STATE_1,
                         STATE_2, 
                         STATE_3, 
                         STATE_4, 
                         STATE_5, 
-                        STATE_6} STATES;
+                        STATE_6,
+                        STATE_7,
+                        STATE_8,
+                        STATE_9,
+                        STATE_10,
+                        STATE_11,
+                        STATE_12,
+                        STATE_13,
+                        STATE_14,
+                        STATE_15,
+                        STATE_16} STATES;
         
 ////////////////////////////////////////////////////////////////////////////    
    /* 
