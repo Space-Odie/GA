@@ -39,6 +39,20 @@ module Genetic_Algorithm(CLK, RESET);
     integer SELECTION_ARR [0: Population_Size-1];
     reg [7:0] pick, selected1, selected2, selected3, selected4;
     
+    //Breading I/O
+    reg [7:0] PARENT1, PARENT2, cut_point, p;
+    reg DUPLICATE;
+    integer CHILD_STAGE; // COunter to determine what stage breeding is on
+    
+    //mutation state I/O
+    reg [SIZE - 1:0] CHILD_POPULATION [0: (NumOfCities * Population_Size)-1]; //child population
+    integer childIndex, CITY1, CITY2;
+    
+    // Next_Gen I/O
+    integer iteration;
+    integer BEST_CHROMOSOMES [0: Population_Size-1];
+    integer GEN_STAGE;
+    
     initial begin
         //not synthsizable but make sure that this can be applied to the project folder, not personal computer
         $readmemh("C:\\Users\\Tungsten\\Desktop\\College\\data_file.txt", COORDINATES);  
@@ -76,29 +90,28 @@ module Genetic_Algorithm(CLK, RESET);
         BIT7_RAND[6:0] <= RAND_OUT[7:1];
         BIT8_RAND[7:0] <= RAND_OUT[7:0];    //Random Number 0-15
         BIT10_RAND[9:0] <= RAND_OUT[9:0];
-        
+
+        pick <= BIT4_RAND;
+        selected1 <= BIT10_RAND[9:6]; 
+        selected2 <= BIT10_RAND[8:5];
+        selected3 <= BIT10_RAND[7:4];
+        selected4 <= BIT10_RAND[6:3];
+
+        //VARIABLES FOR MUTATION   (fix this so the bits are automatically based on the # of cities to closest binary?)
+        CITY1 <= BIT10_RAND[9:8];
+        CITY2 <= BIT10_RAND[6:5];
+        CHANCE <= BIT8_RAND;
+
+
+
      end 
 
-    always @ (posedge CLK)
+    always @ (CLK)
     begin
 
         if (!RESET) 
         begin
-        
-        /*
-        //LSFR: Random Number Generator
-
-        RAND_OUT <= RAND_OUT >> 1;
-        RAND_OUT[7] <= RAND_OUT[0] ^
-                             ((TAPS[6]) ? RAND_OUT[1] : 0) ^
-                             ((TAPS[5]) ? RAND_OUT[2] : 0) ^
-                             ((TAPS[4]) ? RAND_OUT[3] : 0) ^
-                             ((TAPS[3]) ? RAND_OUT[4] : 0) ^
-                             ((TAPS[2]) ? RAND_OUT[5] : 0) ^
-                             ((TAPS[1]) ? RAND_OUT[6] : 0) ^
-                             ((TAPS[0]) ? RAND_OUT[7] : 0);
-        
-        */
+    
             case (STATE)
                 STATE_1: begin
                         
@@ -119,6 +132,9 @@ module Genetic_Algorithm(CLK, RESET);
                             POPULATION[((route*NumOfCities) + city)] <= Index[city];
                     end 
                     NEXT_STATE <= STATE_2;
+
+                    //initialize
+                    iteration <= 0;
                 end //End of Initialization/State_1
 
                 STATE_2: begin
@@ -169,30 +185,29 @@ module Genetic_Algorithm(CLK, RESET);
                     NEXT_STATE <= STATE_4;
                 end
 
+                //elitism
                 STATE_4: begin
                     for (i = 0; i < ElitismSize; i++) 
                         begin
                             SELECTION_ARR[i] <= RouteIndex[i];
 
+                            //pass elite directly to children
+
+                            for (city=0; city <= NumOfCities; city++)  //Pass Elitism To Child Array Population
+                                CHILD_POPULATION[(i * NumOfCities) + city] <= POPULATION[((RouteIndex[i]*NumOfCities) + city)];
+                                    
                         end 
 
                     NEXT_STATE <= STATE_5;
-                    pick <= BIT4_RAND;
-                    selected1 <= BIT10_RAND[9:6]; 
-                    selected2 <= BIT10_RAND[8:5];
-                    selected3 <= BIT10_RAND[7:4];
-                    selected4 <= BIT10_RAND[6:3];
+
                 end      
 
-                STATE_5: begin      //CLK sensitive
+                //selection
+                STATE_5: begin      //CLK sensitive 
                     if (i < Population_Size)
                     begin
 
-                        pick <= BIT4_RAND;
-                        selected1 <= BIT10_RAND[9:6]; 
-                        selected2 <= BIT10_RAND[8:5];
-                        selected3 <= BIT10_RAND[7:4];
-                        selected4 <= BIT10_RAND[6:3];
+
 
                         if (selected1 < pick)    //if 10 < 5
                         begin
@@ -217,20 +232,203 @@ module Genetic_Algorithm(CLK, RESET);
                     i++;
 
                     end 
-                    else if (i > Population_Size - ElitismSize) 
+                    else if (i >= Population_Size - ElitismSize) 
+                    begin 
+                        route <= ElitismSize - 1;
+                        city <= 0;
+                        childIndex <= ElitismSize;
                         NEXT_STATE <= STATE_6;
-                        i <= ElitismSize - 1;
-                        MUTATION <= 0;
-
-                        CHANCE <= BIT_8RAND
+                    end 
+                    
                 end 
 
-            endcase 
-        end
-        STATE <= NEXT_STATE;
-    end 
+                STATE_6: begin     //Mutation
+
+                    if (route < Population_Size)
+                    begin
+                        if (CHANCE <= MUTATION_RATE)
+                        begin
+                            $display("mutation occured on route: %d |Route Index %d| chance %d", route, RouteIndex[route], CHANCE);
+//                            POPULATION[((RouteIndex[route] * NumofCities) + CITY1)] <= POPULATION[((RouteIndex[route] *NumofCities) + CITY2)];
+//                            POPULATION[((RouteIndex[route] * NumofCities) + CITY2)] <= POPULATION[((RouteIndex[route] *NumofCities) + CITY1)];
+                            $display("CITY1 | CITY2", CITY1, CITY2);
+
+
+
+                            for (city=0; city <= NumOfCities; city++)  //pass mutated to child population
+                                CHILD_POPULATION[(childIndex * NumOfCities) + city] <= POPULATION[((RouteIndex[route]*NumOfCities) + city)]; 
+
+                            //mutate the child by swapping two cities. 
+                           CHILD_POPULATION[((childIndex * NumOfCities) + CITY1)] <= POPULATION[((RouteIndex[route] *NumOfCities) + CITY2)];
+                           CHILD_POPULATION[((childIndex * NumOfCities) + CITY2)] <= POPULATION[((RouteIndex[route] *NumOfCities) + CITY1)];
+                            
+
+                            childIndex++;
+                        end 
+                        route++;
+                    end 
+
+                    if (route >= Population_Size)
+                    begin
+                        NEXT_STATE <= STATE_7;
+                       // NEXT_STATE <= STATE_9; //go to state 9 so i can just observe mutation 
+                        p <= 0;
+                        CHILD_STAGE <= 0;
+
+                    end 
+                end 
+
+
+                //Breeding
+                STATE_7: begin
+                    
     
-    
+                    if (CHILD_STAGE == 0) //Assign new parents and a new cut point. 
+                    begin 
+                        cut_point <= BIT4_RAND[1:0]; //add this to LFSR
+                        p <= 0;
+
+
+                        PARENT1 <= BIT10_RAND[8:5];
+                        PARENT2 <= BIT10_RAND[7:4];
+                        DUPLICATE <= 0; 
+                        CHILD_STAGE <= 1;
+ 
+                    end 
+
+
+                    if (CHILD_STAGE == 1) // Grab the "Genes" from Parent 1. 
+                    begin
+                        if( childIndex < Population_Size)
+                        begin       
+
+                            $display("------------------|Displaying childIndex : %d ------------------| p = %d ", childIndex, p);
+                            $display("PARENT 1: %d | PARENT 2: %d || cut point :%d", PARENT1, PARENT2, cut_point);
+                            //Must create edge cases for cut point = 0;
+
+
+                            if (cut_point > 0) 
+                            begin
+                            
+                                for (city=0; city < cut_point; city++)
+                                begin
+                                    CHILD_POPULATION[((childIndex*NumOfCities) + city)] <= POPULATION[((PARENT1 * NumOfCities) + city)];   //move the first part of parent 1's route to the "child"
+                                    $display("Adding Parent 1 city %d to Child:", POPULATION[((PARENT1*NumOfCities) + city)]);
+                                end 
+                            end 
+
+                            city <= 0;
+                            CHILD_STAGE <= 2; 
+                        end 
+
+                        if (childIndex == Population_Size) 
+                        begin
+                            CHILD_STAGE <= 0; //breeding is done. 
+                            GEN_STAGE <= 0;
+                            NEXT_STATE <= STATE_8; 
+                        end            
+                    end  
+
+                if (CHILD_STAGE == 2) // Grab a "Genes" from Parent 2 and check for duplicates
+                begin
+
+                    if (cut_point == 0) begin
+
+                        for (city=0; city < NumOfCities; city++)
+                        begin
+                            CHILD_POPULATION[((childIndex*NumOfCities) + city)] <= POPULATION[((PARENT2 * NumOfCities) + city)];   //move the first part of parent 1's route to the "child"
+                            $display("CP = 0 !!  Adding Parent 2 city %d to Child:", POPULATION[((PARENT2*NumOfCities) + city)]);
+                        end 
+                    end 
+
+
+                    if (city <= NumOfCities) 
+                    begin
+                        for (j=0; j<= cut_point; j++)
+                        begin
+                            if ( CHILD_POPULATION[((childIndex*NumOfCities) + j)] == POPULATION[((PARENT2*NumOfCities) + city)] )
+                            begin 
+                                DUPLICATE <= 1;
+                                $display("duplicate found: %d ---- Activating", POPULATION[((PARENT2*NumOfCities) + city)]);
+                                break; //do not need to continue the loop once a duplicate is found. 
+                            end
+                        end 
+
+                        CHILD_STAGE <= 3;
+                    end 
+
+                    if (city == NumOfCities)    //CHROMOSONE COMPLETED, MOVE TO NEXT. 
+                    begin
+                        CHILD_STAGE <= 0;
+                        childIndex++; 
+
+                    end 
+                end 
+                if (CHILD_STAGE == 3) // if gene is new, add it to the chromosone. 
+                begin
+                    if (!DUPLICATE) 
+                    begin            
+                        CHILD_POPULATION[((childIndex*NumOfCities) + cut_point + p)] <= POPULATION[((PARENT2*NumOfCities) + city)];
+                        $display("Adding Parent 2 city %d to Child", POPULATION[((PARENT2*NumOfCities) + city)]);
+                        p <= p + 1;
+                    end 
+
+                    if (DUPLICATE) begin
+                        DUPLICATE <= 0;
+                    end
+                    CHILD_STAGE <= 2; 
+                    city++; 
+                end 
+            end 
+            
+            //next gen
+            STATE_8: begin 
+                if (GEN_STAGE == 0) 
+                begin
+                    //pass child array to population
+                    POPULATION <= CHILD_POPULATION;
+                    // pass most fit gene so it can be graphed at the end. CHILD_POPULATION[0] is most fit child, grabbed from elitism. 
+                    BEST_CHROMOSOMES[iteration] <= SORTED_FITNESS[0];
+                    iteration++;
+                    GEN_STAGE <= 1;
+                end 
+
+                if (GEN_STAGE == 1) 
+                begin
+                    // reset any values that need to be rest here. 
+
+                    //reset Route Index (May not be needed but easier for verification)
+                    for (i=0; i<= Population_Size; i++)
+                        RouteIndex[i] = i;
+                     
+                    // child population should be set to all value 0s
+                    for (i=0; i < (NumOfCities * Population_Size); i++)
+                        CHILD_POPULATION[i] <= 0;
+
+                    for (i=0; i < Population_Size; i++) 
+                        SORTED_FITNESS[i] <= 0;
+
+                    GEN_STAGE <= 2; 
+                end 
+
+                if (GEN_STAGE == 2)   //check if iterations are done. 
+                begin 
+                    if (iteration < total_iterations)
+                    begin
+                        NEXT_STATE <= STATE_2; // Find Distance of new Population 
+                    end 
+                    if (iteration >= total_iterations)
+                    begin
+                        NEXT_STATE <= STATE_9;
+                        $display ("Done with iterations");
+                    end 
+                end 
+                
+            end 
+        endcase 
+    end
+    STATE <= NEXT_STATE;
+end   
 endmodule 
 
 
