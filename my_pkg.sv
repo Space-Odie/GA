@@ -6,12 +6,12 @@ package my_pkg;
 
 //PARAMETERS
     parameter SIZE = 8;                 //default 8 bit (max value is 180 for a coordinate)
-    parameter NumOfCities = 5;
+    parameter NumOfCities = 32;
     parameter Population_Size = 16; 
     parameter ElitismSize = 3;
-    parameter total_iterations = 30;
+    parameter total_iterations = 2;
     
-    parameter MUTATION_RATE = 20; // Population_Size << 3;
+    parameter MUTATION_RATE = 3; // Population_Size << 3;
     
     
     //typedef
