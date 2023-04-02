@@ -1,24 +1,24 @@
 `timescale 1ns/1ns
 
-package global;
+package my_pkg;
 
-    //Add enum to global package
-        $display()
+
+  // Add localparameters here
+    parameter Number_of_Cities = 8;
+    parameter Population_Size = 100;
+    parameter eliteSize = 20;
+    parameter mutationRate = 4; //.04%
+    parameter generations = 500;
+
+  //Add Tasks / Functions here
+  
+
     typedef enum reg [2:0] {INITIALIZE,
                             RANK_ROUTES, 
                             SELECTION, 
                             BREED, 
                             MUTATE, 
-                            NEXT_GEN} STATES;
-
-  // Add localparameters here
-    Local parameter Number_of_Cities = 8;
-    local parameter Population_Size = 100;
-    Local parameter eliteSize = 20;
-    local Parameter mutationRate = 4; //.04%
-    local parameter generations = 500;
-
-  //Add Tasks / Functions here
-  
+                            NEXT_GEN,
+                            DONE} STATES;
       
 endpackage
